@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+    <PublishAot>true</PublishAot>
+    <NativeLib>Shared</NativeLib>
+    <SelfContained>true</SelfContained>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <Version>0.1.0</Version>
+    <AssemblyName>Overfloat</AssemblyName>
+    <PackageId>Overfloat</PackageId>
+    <Authors>Overfloat Contributors</Authors>
+    <Description>IEEE 754-oriented arbitrary precision floating-point runtime with a native C ABI.</Description>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/overfloat/overfloat</RepositoryUrl>
+    <Company>Overfloat</Company>
+    <Product>Overfloat</Product>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="src/Overfloat/**/*.cs" />
+    <None Include="include/**/*.h" Pack="true" PackagePath="include/" />
+    <None Include="README.md" Pack="true" PackagePath="" />
+    <None Include="LICENSE" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>
+
