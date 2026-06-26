@@ -55,7 +55,7 @@ public sealed class OverfloatNumber
     public static OverfloatNumber CreateMaxFinite(OverfloatSpecification specification, bool negative)
     {
         var significand = BigIntegerExtensions.PowerOfTwo(specification.PrecisionBits) - BigInteger.One;
-        var exponent = specification.MaxNormalExponent - (specification.PrecisionBits - 1);
+        var exponent = checked((int)(specification.MaxNormalExponent - (specification.PrecisionBits - 1)));
         return CreateFinite(specification, negative, significand, exponent);
     }
 

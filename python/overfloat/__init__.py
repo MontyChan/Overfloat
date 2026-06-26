@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from ctypes import CDLL, POINTER, c_char, c_char_p, c_int, c_void_p, create_string_buffer
 from pathlib import Path
 
@@ -249,3 +250,34 @@ class OverfloatLibrary:
         if not handle:
             raise OverfloatError("Unable to create specification.")
         return OverfloatSpec(self, int(handle))
+
+    def create_spec_from_total_bits(self, total_bits: int, rounding_mode: int = 0) -> OverfloatSpec:
+        exponent_bits, mantissa_bits = self._resolve_standard_bit_widths(total_bits)
+        return self.create_spec(exponent_bits, mantissa_bits, rounding_mode)
+
+    @staticmethod
+    def _resolve_standard_bit_widths(total_bits: int) -> tuple[int, int]:
+        fixed_sizes = {
+            16: (5, 10),
+            32: (8, 23),
+            64: (11, 52),
+            128: (15, 112),
+        }
+        if total_bits in fixed_sizes:
+            return fixed_sizes[total_bits]
+        if total_bits < 16 or total_bits < 128:
+            raise OverfloatError(
+                "This total bit width has no standard definition. Use create_spec(exponent_bits, mantissa_bits) to specify widths manually."
+            )
+        if total_bits % 32 != 0:
+            raise OverfloatError(
+                "Total bit width must be a multiple of 32 for IEEE 754-2008 binary interchange format extensions greater than 128 bits."
+            )
+
+        exponent_bits = round(4 * math.log2(total_bits)) - 13
+        mantissa_bits = total_bits - exponent_bits - 1
+        if exponent_bits < 2 or mantissa_bits < 1:
+            raise OverfloatError(
+                "Unable to derive IEEE 754-2008 binary interchange format widths for the specified total bit width."
+            )
+        return exponent_bits, mantissa_bits

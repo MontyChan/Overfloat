@@ -16,6 +16,7 @@ OVERFLOAT_API int overfloat_version_major(void);
 OVERFLOAT_API int overfloat_version_minor(void);
 OVERFLOAT_API int overfloat_version_patch(void);
 OVERFLOAT_API void* overfloat_spec_create(int exponent_bits, int mantissa_bits, int rounding_mode);
+OVERFLOAT_API void* overfloat_spec_create_from_total_bits(int total_bits, int rounding_mode);
 OVERFLOAT_API void overfloat_spec_free(void* spec_handle);
 OVERFLOAT_API int overfloat_spec_exponent_bits(void* spec_handle);
 OVERFLOAT_API int overfloat_spec_mantissa_bits(void* spec_handle);

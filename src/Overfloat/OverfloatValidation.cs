@@ -4,7 +4,7 @@ public static class OverfloatValidation
 {
     public static OverfloatStatus ValidateSpecification(int exponentBits, int mantissaBits)
     {
-        if (exponentBits < 2 || exponentBits > 30)
+        if (exponentBits < 2)
         {
             return OverfloatStatus.InvalidArgument;
         }

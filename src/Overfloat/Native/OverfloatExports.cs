@@ -34,6 +34,33 @@ public static unsafe partial class OverfloatExports
         {
             return nint.Zero;
         }
+        catch (OverflowException)
+        {
+            return nint.Zero;
+        }
+    }
+
+    [UnmanagedCallersOnly(EntryPoint = "overfloat_spec_create_from_total_bits")]
+    public static nint SpecCreateFromTotalBits(int totalBits, int roundingMode)
+    {
+        if (!Enum.IsDefined(typeof(OverfloatRoundingMode), roundingMode))
+        {
+            return nint.Zero;
+        }
+
+        try
+        {
+            var spec = OverfloatSpecification.FromTotalBits(totalBits, (OverfloatRoundingMode)roundingMode);
+            return OverfloatHandleHelpers.Allocate(spec);
+        }
+        catch (ArgumentException)
+        {
+            return nint.Zero;
+        }
+        catch (OverflowException)
+        {
+            return nint.Zero;
+        }
     }
 
     [UnmanagedCallersOnly(EntryPoint = "overfloat_spec_free")]
@@ -87,6 +114,10 @@ public static unsafe partial class OverfloatExports
             return nint.Zero;
         }
         catch (OverflowException)
+        {
+            return nint.Zero;
+        }
+        catch (NotSupportedException)
         {
             return nint.Zero;
         }
@@ -150,6 +181,10 @@ public static unsafe partial class OverfloatExports
             return OverfloatHandleHelpers.Allocate(operation(left, right));
         }
         catch (InvalidOperationException)
+        {
+            return nint.Zero;
+        }
+        catch (NotSupportedException)
         {
             return nint.Zero;
         }

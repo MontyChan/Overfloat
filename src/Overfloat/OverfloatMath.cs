@@ -23,7 +23,13 @@ public static class OverfloatMath
             return left.Classification == OverfloatClassification.Infinity ? left : right;
         }
 
-        return Quantize(left.Specification, left.ToRational() + right.ToRational());
+        var sum = left.ToRational() + right.ToRational();
+        if (sum.IsZero)
+        {
+            return CreateExactZeroValue(left.Specification);
+        }
+
+        return Quantize(left.Specification, sum);
     }
 
     public static OverfloatNumber Subtract(OverfloatNumber left, OverfloatNumber right)
@@ -106,10 +112,9 @@ public static class OverfloatMath
         var precisionBits = specification.PrecisionBits;
         var minNormalExponent = specification.MinNormalExponent;
         var maxNormalExponent = specification.MaxNormalExponent;
-        var minNormalSignificand = BigIntegerExtensions.PowerOfTwo(precisionBits - 1);
         var normalExponent = FloorLog2(magnitude);
 
-        if (normalExponent >= minNormalExponent)
+        if (new BigInteger(normalExponent) >= minNormalExponent)
         {
             var roundedSignificand = RoundScaled(magnitude, precisionBits - 1 - normalExponent, specification.RoundingMode, negative);
             if (roundedSignificand == BigIntegerExtensions.PowerOfTwo(precisionBits))
@@ -118,7 +123,7 @@ public static class OverfloatMath
                 normalExponent++;
             }
 
-            if (normalExponent > maxNormalExponent)
+            if (new BigInteger(normalExponent) > maxNormalExponent)
             {
                 return CreateOverflowValue(specification, negative);
             }
@@ -127,13 +132,25 @@ public static class OverfloatMath
         }
 
         var subnormalBinaryExponent = minNormalExponent - (precisionBits - 1);
-        var subnormalSignificand = RoundScaled(magnitude, -subnormalBinaryExponent, specification.RoundingMode, negative);
+        if (subnormalBinaryExponent < int.MinValue)
+        {
+            return OverfloatNumber.CreateZero(specification, negative);
+        }
+
+        var subnormalBinaryExponentInt = (int)subnormalBinaryExponent;
+        var subnormalSignificand = RoundScaled(magnitude, -subnormalBinaryExponentInt, specification.RoundingMode, negative);
         if (subnormalSignificand.IsZero)
         {
             return OverfloatNumber.CreateZero(specification, negative);
         }
 
-        return OverfloatNumber.CreateFinite(specification, negative, subnormalSignificand, subnormalBinaryExponent);
+        return OverfloatNumber.CreateFinite(specification, negative, subnormalSignificand, subnormalBinaryExponentInt);
+    }
+
+    private static OverfloatNumber CreateExactZeroValue(OverfloatSpecification specification)
+    {
+        var negative = specification.RoundingMode == OverfloatRoundingMode.TowardNegativeInfinity;
+        return OverfloatNumber.CreateZero(specification, negative);
     }
 
     private static OverfloatNumber CreateOverflowValue(OverfloatSpecification specification, bool negative)
