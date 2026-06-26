@@ -8,16 +8,17 @@ public static class OverfloatMath
     {
         EnsureCompatible(left, right);
 
-        if (left.Classification == OverfloatClassification.NaN || right.Classification == OverfloatClassification.NaN)
+        if (TryPropagateNaN(left, right, out var propagatedNaN))
         {
-            return OverfloatNumber.CreateNaN(left.Specification);
+            return propagatedNaN;
         }
 
         if (left.Classification == OverfloatClassification.Infinity || right.Classification == OverfloatClassification.Infinity)
         {
             if (left.Classification == OverfloatClassification.Infinity && right.Classification == OverfloatClassification.Infinity && left.Negative != right.Negative)
             {
-                return OverfloatNumber.CreateNaN(left.Specification);
+                OverfloatEnvironment.Raise(OverfloatExceptionFlags.Invalid);
+                return CreateQuietNaN(left, right);
             }
 
             return left.Classification == OverfloatClassification.Infinity ? left : right;
@@ -39,15 +40,16 @@ public static class OverfloatMath
     {
         EnsureCompatible(left, right);
 
-        if (left.Classification == OverfloatClassification.NaN || right.Classification == OverfloatClassification.NaN)
+        if (TryPropagateNaN(left, right, out var propagatedNaN))
         {
-            return OverfloatNumber.CreateNaN(left.Specification);
+            return propagatedNaN;
         }
 
         if ((left.Classification == OverfloatClassification.Infinity && right.Classification == OverfloatClassification.Zero) ||
             (right.Classification == OverfloatClassification.Infinity && left.Classification == OverfloatClassification.Zero))
         {
-            return OverfloatNumber.CreateNaN(left.Specification);
+            OverfloatEnvironment.Raise(OverfloatExceptionFlags.Invalid);
+            return CreateQuietNaN(left, right);
         }
 
         if (left.Classification == OverfloatClassification.Infinity || right.Classification == OverfloatClassification.Infinity)
@@ -62,15 +64,16 @@ public static class OverfloatMath
     {
         EnsureCompatible(left, right);
 
-        if (left.Classification == OverfloatClassification.NaN || right.Classification == OverfloatClassification.NaN)
+        if (TryPropagateNaN(left, right, out var propagatedNaN))
         {
-            return OverfloatNumber.CreateNaN(left.Specification);
+            return propagatedNaN;
         }
 
         if ((left.Classification == OverfloatClassification.Zero && right.Classification == OverfloatClassification.Zero) ||
             (left.Classification == OverfloatClassification.Infinity && right.Classification == OverfloatClassification.Infinity))
         {
-            return OverfloatNumber.CreateNaN(left.Specification);
+            OverfloatEnvironment.Raise(OverfloatExceptionFlags.Invalid);
+            return CreateQuietNaN(left, right);
         }
 
         if (left.Classification == OverfloatClassification.Infinity)
@@ -85,9 +88,14 @@ public static class OverfloatMath
 
         if (right.Classification == OverfloatClassification.Zero)
         {
-            return left.Classification == OverfloatClassification.Zero
-                ? OverfloatNumber.CreateNaN(left.Specification)
-                : OverfloatNumber.CreateInfinity(left.Specification, left.Negative ^ right.Negative);
+            if (left.Classification == OverfloatClassification.Zero)
+            {
+                OverfloatEnvironment.Raise(OverfloatExceptionFlags.Invalid);
+                return CreateQuietNaN(left, right);
+            }
+
+            OverfloatEnvironment.Raise(OverfloatExceptionFlags.DivideByZero);
+            return OverfloatNumber.CreateInfinity(left.Specification, left.Negative ^ right.Negative);
         }
 
         if (left.Classification == OverfloatClassification.Zero)
@@ -96,6 +104,70 @@ public static class OverfloatMath
         }
 
         return Quantize(left.Specification, left.ToRational() / right.ToRational());
+    }
+
+    public static int Compare(OverfloatNumber left, OverfloatNumber right)
+    {
+        EnsureCompatible(left, right);
+
+        if (left.Classification == OverfloatClassification.NaN || right.Classification == OverfloatClassification.NaN)
+        {
+            OverfloatEnvironment.Raise(OverfloatExceptionFlags.Invalid);
+            throw new InvalidOperationException("Ordered comparison is undefined when either operand is NaN.");
+        }
+
+        if (left.Classification == OverfloatClassification.Zero && right.Classification == OverfloatClassification.Zero)
+        {
+            return 0;
+        }
+
+        if (left.Classification == OverfloatClassification.Infinity || right.Classification == OverfloatClassification.Infinity)
+        {
+            if (left.Classification == right.Classification)
+            {
+                if (left.Negative == right.Negative)
+                {
+                    return 0;
+                }
+
+                return left.Negative ? -1 : 1;
+            }
+
+            if (left.Classification == OverfloatClassification.Infinity)
+            {
+                return left.Negative ? -1 : 1;
+            }
+
+            return right.Negative ? 1 : -1;
+        }
+
+        if (left.Negative != right.Negative)
+        {
+            return left.Negative ? -1 : 1;
+        }
+
+        return left.ToRational().CompareTo(right.ToRational());
+    }
+
+    public static int CompareTotal(OverfloatNumber left, OverfloatNumber right)
+    {
+        EnsureCompatible(left, right);
+
+        var leftBits = OverfloatBitConverter.EncodeToBitPattern(left);
+        var rightBits = OverfloatBitConverter.EncodeToBitPattern(right);
+        if (leftBits == rightBits)
+        {
+            return 0;
+        }
+
+        if (left.Negative != right.Negative)
+        {
+            return left.Negative ? -1 : 1;
+        }
+
+        return left.Negative
+            ? rightBits.CompareTo(leftBits)
+            : leftBits.CompareTo(rightBits);
     }
 
     internal static OverfloatNumber Quantize(OverfloatSpecification specification, Rational value)
@@ -116,7 +188,7 @@ public static class OverfloatMath
 
         if (new BigInteger(normalExponent) >= minNormalExponent)
         {
-            var roundedSignificand = RoundScaled(magnitude, precisionBits - 1 - normalExponent, specification.RoundingMode, negative);
+            var roundedSignificand = RoundScaled(magnitude, precisionBits - 1 - normalExponent, specification.RoundingMode, negative, out var inexactNormal);
             if (roundedSignificand == BigIntegerExtensions.PowerOfTwo(precisionBits))
             {
                 roundedSignificand >>= 1;
@@ -125,7 +197,13 @@ public static class OverfloatMath
 
             if (new BigInteger(normalExponent) > maxNormalExponent)
             {
+                OverfloatEnvironment.Raise(OverfloatExceptionFlags.Overflow | OverfloatExceptionFlags.Inexact);
                 return CreateOverflowValue(specification, negative);
+            }
+
+            if (inexactNormal)
+            {
+                OverfloatEnvironment.Raise(OverfloatExceptionFlags.Inexact);
             }
 
             return OverfloatNumber.CreateFinite(specification, negative, roundedSignificand, normalExponent - (precisionBits - 1));
@@ -134,14 +212,25 @@ public static class OverfloatMath
         var subnormalBinaryExponent = minNormalExponent - (precisionBits - 1);
         if (subnormalBinaryExponent < int.MinValue)
         {
+            OverfloatEnvironment.Raise(OverfloatExceptionFlags.Underflow | OverfloatExceptionFlags.Inexact);
             return OverfloatNumber.CreateZero(specification, negative);
         }
 
         var subnormalBinaryExponentInt = (int)subnormalBinaryExponent;
-        var subnormalSignificand = RoundScaled(magnitude, -subnormalBinaryExponentInt, specification.RoundingMode, negative);
+        var subnormalSignificand = RoundScaled(magnitude, -subnormalBinaryExponentInt, specification.RoundingMode, negative, out var inexactSubnormal);
         if (subnormalSignificand.IsZero)
         {
+            if (inexactSubnormal)
+            {
+                OverfloatEnvironment.Raise(OverfloatExceptionFlags.Underflow | OverfloatExceptionFlags.Inexact);
+            }
+
             return OverfloatNumber.CreateZero(specification, negative);
+        }
+
+        if (inexactSubnormal)
+        {
+            OverfloatEnvironment.Raise(OverfloatExceptionFlags.Underflow | OverfloatExceptionFlags.Inexact);
         }
 
         return OverfloatNumber.CreateFinite(specification, negative, subnormalSignificand, subnormalBinaryExponentInt);
@@ -187,7 +276,50 @@ public static class OverfloatMath
         return comparison < 0 ? exponent - 1 : exponent;
     }
 
-    private static BigInteger RoundScaled(Rational value, int powerOfTwoScale, OverfloatRoundingMode roundingMode, bool negative)
+    private static bool TryPropagateNaN(OverfloatNumber left, OverfloatNumber right, out OverfloatNumber result)
+    {
+        if (left.Classification == OverfloatClassification.NaN)
+        {
+            if (left.IsSignalingNaN || right.IsSignalingNaN)
+            {
+                OverfloatEnvironment.Raise(OverfloatExceptionFlags.Invalid);
+            }
+
+            result = left.QuietNaN();
+            return true;
+        }
+
+        if (right.Classification == OverfloatClassification.NaN)
+        {
+            if (right.IsSignalingNaN)
+            {
+                OverfloatEnvironment.Raise(OverfloatExceptionFlags.Invalid);
+            }
+
+            result = right.QuietNaN();
+            return true;
+        }
+
+        result = null!;
+        return false;
+    }
+
+    private static OverfloatNumber CreateQuietNaN(OverfloatNumber left, OverfloatNumber right)
+    {
+        if (left.Classification == OverfloatClassification.NaN)
+        {
+            return left.QuietNaN();
+        }
+
+        if (right.Classification == OverfloatClassification.NaN)
+        {
+            return right.QuietNaN();
+        }
+
+        return OverfloatNumber.CreateNaN(left.Specification);
+    }
+
+    private static BigInteger RoundScaled(Rational value, int powerOfTwoScale, OverfloatRoundingMode roundingMode, bool negative, out bool inexact)
     {
         var numerator = BigInteger.Abs(value.Numerator);
         var denominator = value.Denominator;
@@ -201,12 +333,13 @@ public static class OverfloatMath
             denominator <<= -powerOfTwoScale;
         }
 
-        return RoundQuotient(numerator, denominator, roundingMode, negative);
+        return RoundQuotient(numerator, denominator, roundingMode, negative, out inexact);
     }
 
-    private static BigInteger RoundQuotient(BigInteger numerator, BigInteger denominator, OverfloatRoundingMode roundingMode, bool negative)
+    private static BigInteger RoundQuotient(BigInteger numerator, BigInteger denominator, OverfloatRoundingMode roundingMode, bool negative, out bool inexact)
     {
         var quotient = BigInteger.DivRem(numerator, denominator, out var remainder);
+        inexact = !remainder.IsZero;
         if (remainder.IsZero)
         {
             return quotient;

@@ -2,7 +2,7 @@ using System.Numerics;
 
 namespace Overfloat;
 
-internal readonly struct Rational
+internal readonly struct Rational : IComparable<Rational>
 {
     public Rational(BigInteger numerator, BigInteger denominator)
     {
@@ -38,6 +38,9 @@ internal readonly struct Rational
     public int Sign => Numerator.Sign;
 
     public Rational Abs() => Sign < 0 ? new Rational(BigInteger.Abs(Numerator), Denominator) : this;
+
+    public int CompareTo(Rational other)
+        => (Numerator * other.Denominator).CompareTo(other.Numerator * Denominator);
 
     public static Rational operator +(Rational left, Rational right)
         => new(left.Numerator * right.Denominator + right.Numerator * left.Denominator, left.Denominator * right.Denominator);

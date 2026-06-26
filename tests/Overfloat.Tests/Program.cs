@@ -103,7 +103,43 @@ public static class Program
         var posZero = Overfloat.OverfloatMath.Add(
             Overfloat.OverfloatNumber.Parse(nearest, "1"),
             Overfloat.OverfloatNumber.Parse(nearest, "-1"));
-        return posZero.Classification == Overfloat.OverfloatClassification.Zero && !posZero.Negative && posZero.ToString() == "0" ? 0 : 17;
+        if (posZero.Classification != Overfloat.OverfloatClassification.Zero || posZero.Negative || posZero.ToString() != "0")
+        {
+            return 17;
+        }
+
+        Overfloat.OverfloatEnvironment.ClearExceptionFlags();
+        var signalingNaN = Overfloat.OverfloatNumber.Parse(spec, "sNaN(7)");
+        var quietNaN = Overfloat.OverfloatMath.Add(signalingNaN, onePointFive);
+        if (quietNaN.Classification != Overfloat.OverfloatClassification.NaN ||
+            quietNaN.IsSignalingNaN ||
+            quietNaN.NaNPayload != new BigInteger(7) ||
+            (Overfloat.OverfloatEnvironment.ExceptionFlags & Overfloat.OverfloatExceptionFlags.Invalid) == 0)
+        {
+            return 18;
+        }
+
+        Overfloat.OverfloatEnvironment.ClearExceptionFlags();
+        var divisionByZero = Overfloat.OverfloatMath.Divide(
+            Overfloat.OverfloatNumber.Parse(spec, "1"),
+            Overfloat.OverfloatNumber.Parse(spec, "0"));
+        if (divisionByZero.Classification != Overfloat.OverfloatClassification.Infinity ||
+            (Overfloat.OverfloatEnvironment.ExceptionFlags & Overfloat.OverfloatExceptionFlags.DivideByZero) == 0)
+        {
+            return 19;
+        }
+
+        Overfloat.OverfloatEnvironment.ClearExceptionFlags();
+        var inexact = Overfloat.OverfloatMath.Divide(
+            Overfloat.OverfloatNumber.Parse(spec, "1"),
+            Overfloat.OverfloatNumber.Parse(spec, "10"));
+        if ((inexact.Classification != Overfloat.OverfloatClassification.Normal && inexact.Classification != Overfloat.OverfloatClassification.Subnormal) ||
+            (Overfloat.OverfloatEnvironment.ExceptionFlags & Overfloat.OverfloatExceptionFlags.Inexact) == 0)
+        {
+            return 20;
+        }
+
+        return 0;
     }
 
     private static bool ValidateStandardSpec(int totalBits, int expectedExponentBits, int expectedMantissaBits, BigInteger expectedBias)

@@ -14,7 +14,8 @@ extern "C" {
 
 OVERFLOAT_API int overfloat_version_major(void);
 OVERFLOAT_API int overfloat_version_minor(void);
-OVERFLOAT_API int overfloat_version_patch(void);
+OVERFLOAT_API int overfloat_exception_flags_get(void);
+OVERFLOAT_API void overfloat_exception_flags_clear(void);
 OVERFLOAT_API void* overfloat_spec_create(int exponent_bits, int mantissa_bits, int rounding_mode);
 OVERFLOAT_API void* overfloat_spec_create_from_total_bits(int total_bits, int rounding_mode);
 OVERFLOAT_API void overfloat_spec_free(void* spec_handle);
@@ -24,15 +25,21 @@ OVERFLOAT_API int overfloat_spec_rounding_mode(void* spec_handle);
 OVERFLOAT_API int overfloat_spec_validate(void* spec_handle);
 
 OVERFLOAT_API void* overfloat_number_parse(void* spec_handle, const char* text_utf8);
+OVERFLOAT_API void* overfloat_number_from_bits_hex(void* spec_handle, const char* hex_utf8);
 OVERFLOAT_API void overfloat_number_free(void* number_handle);
 OVERFLOAT_API void* overfloat_number_add(void* left_handle, void* right_handle);
 OVERFLOAT_API void* overfloat_number_subtract(void* left_handle, void* right_handle);
 OVERFLOAT_API void* overfloat_number_multiply(void* left_handle, void* right_handle);
 OVERFLOAT_API void* overfloat_number_divide(void* left_handle, void* right_handle);
+OVERFLOAT_API int overfloat_number_compare(void* left_handle, void* right_handle);
+OVERFLOAT_API int overfloat_number_compare_total(void* left_handle, void* right_handle);
 OVERFLOAT_API int overfloat_number_classification(void* number_handle);
 OVERFLOAT_API int overfloat_number_is_negative(void* number_handle);
+OVERFLOAT_API int overfloat_number_is_signaling_nan(void* number_handle);
 OVERFLOAT_API int overfloat_number_binary_exponent(void* number_handle);
 OVERFLOAT_API int overfloat_number_format(void* number_handle, char* buffer_utf8, int buffer_length);
+OVERFLOAT_API int overfloat_number_nan_payload_format(void* number_handle, char* buffer_utf8, int buffer_length);
+OVERFLOAT_API int overfloat_number_to_bits_hex(void* number_handle, char* buffer_utf8, int buffer_length);
 
 #ifdef __cplusplus
 }

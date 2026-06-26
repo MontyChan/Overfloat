@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Numerics;
 using System.Text;
 
@@ -9,11 +10,20 @@ internal static class OverfloatFormatting
     {
         return number.Classification switch
         {
-            OverfloatClassification.NaN => "NaN",
+            OverfloatClassification.NaN => FormatNaN(number),
             OverfloatClassification.Infinity => number.Negative ? "-Infinity" : "Infinity",
             OverfloatClassification.Zero => number.Negative ? "-0" : "0",
             _ => FormatFinite(number),
         };
+    }
+
+    private static string FormatNaN(OverfloatNumber number)
+    {
+        var sign = number.Negative ? "-" : string.Empty;
+        var kind = number.IsSignalingNaN ? "sNaN" : "NaN";
+        return number.NaNPayload.IsZero
+            ? sign + kind
+            : string.Format(CultureInfo.InvariantCulture, "{0}{1}({2})", sign, kind, number.NaNPayload);
     }
 
     private static string FormatFinite(OverfloatNumber number)

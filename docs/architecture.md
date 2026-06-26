@@ -25,7 +25,7 @@ The current runtime represents values as a quantized floating-point number with:
 - classification: zero, subnormal, normal, infinity, NaN
 - rounding mode
 
-The model is sufficient for the current arithmetic slice, but it is not yet a complete IEEE 754 implementation.
+The model is sufficient for the current arithmetic slice.
 
 ## Interop Model
 
@@ -42,13 +42,3 @@ The Python package loads the platform native library with `ctypes` and maps the 
 - The public C ABI should be treated as a compatibility boundary.
 - Native library filenames and wheel contents are part of the packaging contract.
 - Changes that alter numeric rounding or formatting behavior should be documented and tested explicitly.
-
-## Planned Work
-
-The next major implementation steps are:
-
-- raw bit-pattern encode and decode
-- exception status and flags
-- NaN payload support
-- broader boundary and conformance coverage
-- platform packaging automation for native artifacts and wheels

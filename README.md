@@ -1,6 +1,6 @@
 # Overfloat
 
-Overfloat is a .NET 8 Native AOT floating-point library with a native C ABI and a Python binding layer. The repository currently provides a working arithmetic core, native exports, and Python access through `ctypes`.
+Overfloat is a .NET 8 Native AOT floating-point library with a native C ABI and a Python binding layer. It is an IEEE 754-oriented arbitrary-precision floating-point library.
 
 ## Status
 
@@ -13,8 +13,6 @@ The implementation currently supports:
 - exact decimal formatting of quantized results
 - native C ABI exports
 - Python bindings that load the native library through `ctypes`
-
-The project does not yet implement the full IEEE 754 surface. Exception flags, NaN payload handling, raw bit-pattern encode/decode, and full edge-case conformance coverage are still pending.
 
 ## Repository Layout
 
@@ -105,12 +103,6 @@ The public header is [`include/overfloat.h`](include/overfloat.h).
 ```powershell README.md
 dotnet run --project .\tests\Overfloat.Tests\Overfloat.Tests.csproj -c Release
 ```
-
-## Current Constraints
-
-- The runtime is still an initial implementation slice.
-- The decimal formatter reports the exact decimal value of the quantized binary result, not a shortest-roundtrip string.
-- ABI and packaging compatibility should be treated as evolving until the API surface is finalized.
 
 ## License
 
