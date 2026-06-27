@@ -121,9 +121,11 @@ from overfloat import OverfloatLibrary
 
 lib = OverfloatLibrary()
 spec = lib.create_spec_from_total_bits(4096)
+manual_spec = lib.create_spec(43, 4048)
 
 a = spec("1.5")
 b = spec("2.25")
+manual_value = manual_spec("1.5")
 
 print(lib.version)
 print(spec.exponent_bits)
@@ -131,11 +133,36 @@ print(spec.mantissa_bits)
 print(a + b)
 print(a * b)
 print(spec("1") / spec("10"))
+print(manual_spec.exponent_bits)
+print(manual_spec.mantissa_bits)
+print(manual_value)
 print(a.to_bits_hex())
 print(spec.from_bits_hex(a.to_bits_hex()))
 print(a.compare(b))
 print(a.compare_total(b))
 print(lib.exception_flags)
+```
+
+`create_spec_from_total_bits(total_bits)` 适合直接使用预设总位宽。
+
+`create_spec(exponent_bits, mantissa_bits)` 适合需要手动指定指数位和尾数位的场景。
+
+内置预设格式：
+
+- `16` -> 指数位 `5`，尾数位 `10`
+- `32` -> 指数位 `8`，尾数位 `23`
+- `64` -> 指数位 `11`，尾数位 `52`
+- `128` -> 指数位 `15`，尾数位 `112`
+
+这些预设值本身也符合 IEEE 754 标准格式。实现里对它们直接使用内置映射，而不是再通过公式重新计算。
+
+对于符合 IEEE 754-2008 交换格式扩展规则的情况，也就是 `k >= 128` 且 `k` 是 `32` 的倍数时，`create_spec_from_total_bits(k)` 使用下面这组标准位宽公式：
+
+```text
+k = 总位数，包含符号位
+w = round(4 × log2(k)) - 13    指数位宽
+t = k - w - 1                  尾数存储位宽，不含隐藏位
+p = t + 1 = k - w              精度，包含隐藏位
 ```
 
 如果需要显式管理对象生命周期：

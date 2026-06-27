@@ -122,6 +122,29 @@ print(lib.exception_flags)
 
 `OverfloatSpec` represents one floating-point format definition.
 
+There are two ways to create a spec from Python:
+
+- `create_spec_from_total_bits(total_bits)` for built-in and standard-derived formats
+- `create_spec(exponent_bits, mantissa_bits)` for manual width selection
+
+Built-in preset formats:
+
+- `16` -> exponent `5`, mantissa `10`
+- `32` -> exponent `8`, mantissa `23`
+- `64` -> exponent `11`, mantissa `52`
+- `128` -> exponent `15`, mantissa `112`
+
+These preset values also match the IEEE 754 standard formats. The implementation keeps them as direct built-in mappings.
+
+For IEEE 754-2008 interchange-style formats with `k >= 128` and `k` a multiple of `32`, the total-bit form uses this derivation:
+
+```text
+k = total bit width, including the sign bit
+w = round(4 × log2(k)) - 13    exponent width
+t = k - w - 1                  mantissa storage width, excluding the hidden bit
+p = t + 1 = k - w              precision, including the hidden bit
+```
+
 Public properties:
 
 - `exponent_bits -> int`

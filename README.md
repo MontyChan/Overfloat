@@ -122,9 +122,11 @@ from overfloat import OverfloatLibrary
 
 lib = OverfloatLibrary()
 spec = lib.create_spec_from_total_bits(4096)
+manual_spec = lib.create_spec(43, 4048)
 
 a = spec("1.5")
 b = spec("2.25")
+manual_value = manual_spec("1.5")
 
 print(lib.version)
 print(spec.exponent_bits)
@@ -132,11 +134,36 @@ print(spec.mantissa_bits)
 print(a + b)
 print(a * b)
 print(spec("1") / spec("10"))
+print(manual_spec.exponent_bits)
+print(manual_spec.mantissa_bits)
+print(manual_value)
 print(a.to_bits_hex())
 print(spec.from_bits_hex(a.to_bits_hex()))
 print(a.compare(b))
 print(a.compare_total(b))
 print(lib.exception_flags)
+```
+
+`create_spec_from_total_bits(total_bits)` is the convenient preset form.
+
+`create_spec(exponent_bits, mantissa_bits)` is the manual form when the exponent width and mantissa width need to be set directly.
+
+Built-in preset formats:
+
+- `16` -> exponent `5`, mantissa `10`
+- `32` -> exponent `8`, mantissa `23`
+- `64` -> exponent `11`, mantissa `52`
+- `128` -> exponent `15`, mantissa `112`
+
+These preset values also match the IEEE 754 standard formats. The implementation handles them as direct built-in mappings instead of recomputing them from the formula.
+
+For IEEE 754-2008 interchange-style formats with `k >= 128` and `k` a multiple of `32`, `create_spec_from_total_bits(k)` follows the standard width derivation:
+
+```text
+k = total bit width, including the sign bit
+w = round(4 × log2(k)) - 13    exponent width
+t = k - w - 1                  mantissa storage width, excluding the hidden bit
+p = t + 1 = k - w              precision, including the hidden bit
 ```
 
 For explicit lifetime management:
