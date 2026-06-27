@@ -24,6 +24,7 @@ The implementation currently supports:
 - `tests` - .NET test project
 - `docs` - architecture and design notes
 - `.github/workflows` - CI and release automation
+- `VERSION` - single source of truth for the project version
 
 ## Build Requirements
 

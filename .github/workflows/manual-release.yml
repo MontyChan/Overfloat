@@ -42,6 +42,15 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+      - name: Validate tag matches VERSION
+        shell: pwsh
+        run: |
+          $version = (Get-Content -LiteralPath "VERSION" -Raw).Trim()
+          $tag = "${{ inputs.tag }}".Trim()
+          $normalizedTag = if ($tag.StartsWith("v")) { $tag.Substring(1) } else { $tag }
+          if ($normalizedTag -ne $version) {
+            throw "Release tag '$tag' does not match VERSION '$version'."
+          }
       - name: Setup Python
         uses: actions/setup-python@v5
         with:

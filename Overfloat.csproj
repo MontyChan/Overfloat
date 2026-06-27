@@ -13,7 +13,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
-    <Version>0.1.0</Version>
+    <Version>$([System.String]::Copy($([System.IO.File]::ReadAllText('VERSION'))).Trim())</Version>
     <AssemblyName>Overfloat</AssemblyName>
     <PackageId>Overfloat</PackageId>
     <Authors>Overfloat Contributors</Authors>

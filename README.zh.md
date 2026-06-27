@@ -22,6 +22,7 @@ Overfloat 是一个基于 .NET 8 Native AOT 开发的浮点数库，提供原生
 - `tests` - .NET 测试项目
 - `docs` - 架构与设计说明
 - `.github/workflows` - CI 与发布自动化
+- `VERSION` - 项目版本号的单一来源
 
 ## 构建要求 (Build Requirements)
 
