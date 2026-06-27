@@ -97,6 +97,12 @@ class OverfloatNumber:
             self._library._lib.overfloat_number_free(self._handle)
             self._handle = 0
 
+    def __enter__(self) -> "OverfloatNumber":
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        self.close()
+
     def __str__(self) -> str:
         required = int(self._library._lib.overfloat_number_format(self._handle, None, 0))
         if required <= 0:
@@ -228,6 +234,12 @@ class OverfloatSpec:
             self._library._lib.overfloat_spec_free(self._handle)
             self._handle = 0
 
+    def __enter__(self) -> "OverfloatSpec":
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        self.close()
+
     def __del__(self) -> None:
         self.close()
 
@@ -347,5 +359,4 @@ class OverfloatLibrary:
         if not handle:
             raise OverfloatError("Unable to create specification from total bit width.")
         return OverfloatSpec(self, int(handle))
-
 

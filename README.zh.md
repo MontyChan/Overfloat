@@ -64,14 +64,25 @@ Console.WriteLine(OverfloatMath.Divide(a, b));
 
 ## Python 示例
 
+这些示例应在仓库的 `python/` 目录中运行，这样可以直接导入包，而不必手动修改 `sys.path`。
+
+当 `OverfloatLibrary()` 不传参数直接调用时，封装层会到 Python 包旁边的 `python/overfloat/` 目录查找原生库。查找顺序如下：
+
+- `liboverfloat.so`
+- `overfloat.dll`
+- `liboverfloat.dylib`
+
+在仓库的 `python/` 目录中运行时，默认约定如下：
+
+- Python 导入写法：`from overfloat import OverfloatLibrary`
+- 原生库位置：`python/overfloat/<当前平台的库文件>`
+
+从其他位置加载原生库时，仍然可以显式传入路径。
+
 ```python README.md
-import sys
-
-sys.path.insert(0, "python")
-
 from overfloat import OverfloatLibrary
 
-lib = OverfloatLibrary("python/overfloat/overfloat.dll")
+lib = OverfloatLibrary()
 
 # FP16384，采用本库使用的IEEE 754导向格式。
 # 也可手动指定指数和尾数的位数。
@@ -96,24 +107,30 @@ look! that's so easy!
 
 ## Python 教程
 
-1. 构建原生库或将其复制到 `python/overfloat/` 目录下，以便封装层可以加载它。
-2. 导入 `OverfloatLibrary` 并创建一个库实例。
-3. 当你需要标准的 FPxxx 格式时，使用 `create_spec_from_total_bits(total_bits)`。
-4. 像调用函数一样调用 `spec` 对象来解析数值。
-5. 使用标准的 Python 运算符进行算术运算。
-6. 需要底层检查时，可以使用 `to_bits_hex()`、`from_bits_hex()`、`compare()` 和 `compare_total()`。
-7. 在可能引发 IEEE 状态位的操作后，检查 `exception_flags`。
+1. 先进入仓库的 `python/` 目录。
+2. 构建原生库或将其复制到 `python/overfloat/` 目录下，这样封装层即可自动加载。
+3. 导入 `OverfloatLibrary` 并创建一个库实例。
+4. 需要标准的 FPxxx 格式时，使用 `create_spec_from_total_bits(total_bits)`。
+5. 像调用函数一样调用 `spec` 对象来解析数值。
+6. 使用标准的 Python 运算符进行算术运算。
+7. 需要底层检查时，可以使用 `to_bits_hex()`、`from_bits_hex()`、`compare()` 和 `compare_total()`。
+8. 在可能引发 IEEE 状态位的操作后，检查 `exception_flags`。
+9. 需要确定性的原生句柄释放时，可调用 `close()`，或者使用 `with` 管理对象生命周期。
+
+如果原生库不放在 `python/overfloat/` 中，也仍然可以显式指定路径，例如：
+
+```python README.md
+from overfloat import OverfloatLibrary
+
+lib = OverfloatLibrary("../bin/Release/net8.0/win-x64/publish/Overfloat.dll")
+```
 
 示例：
 
 ```python README.md
-import sys
-
-sys.path.insert(0, "python")
-
 from overfloat import OverfloatLibrary
 
-lib = OverfloatLibrary("python/overfloat/overfloat.dll")
+lib = OverfloatLibrary()
 spec = lib.create_spec_from_total_bits(4096)
 
 
@@ -128,6 +145,18 @@ print(spec.from_bits_hex(a.to_bits_hex()))
 print(a.compare(b))
 print(a.compare_total(b))
 print(lib.exception_flags)
+```
+
+也可以显式管理对象生命周期：
+
+```python README.md
+from overfloat import OverfloatLibrary
+
+lib = OverfloatLibrary()
+
+with lib.create_spec_from_total_bits(4096) as spec:
+    with spec("1.5") as value:
+        print(value)
 ```
 
 对于偏好显式解析语法的代码，`spec.parse("1.5")` 依然可用。
@@ -151,8 +180,10 @@ C 接口使用不透明句柄（opaque handles）。创建规格（specification
 ## 测试 (Tests)
 
 ```powershell README.md
-dotnet run --project .\tests\Overfloat.Tests\Overfloat.Tests.csproj -c Release
+dotnet test .\tests\Overfloat.Tests\Overfloat.Tests.csproj -c Release
 ```
+
+运行 Python 示例和临时 Python 检查时，请使用仓库的 `python/` 目录作为当前工作目录。
 
 ## 开源协议 (License)
 

@@ -65,14 +65,25 @@ Console.WriteLine(OverfloatMath.Divide(a, b));
 
 ## Python Example
 
+Run Python examples from the repository `python/` directory so the package imports directly without modifying `sys.path`.
+
+When `OverfloatLibrary()` is called without arguments, the wrapper looks for the native library next to the Python package in `python/overfloat/`. It checks these filenames in order:
+
+- `liboverfloat.so`
+- `overfloat.dll`
+- `liboverfloat.dylib`
+
+When running from the repository `python/` directory, the default setup is:
+
+- Python import: `from overfloat import OverfloatLibrary`
+- Native library location: `python/overfloat/<platform library file>`
+
+An explicit path remains supported for loading a library from another location.
+
 ```python README.md
-import sys
-
-sys.path.insert(0, "python")
-
 from overfloat import OverfloatLibrary
 
-lib = OverfloatLibrary("python/overfloat/overfloat.dll")
+lib = OverfloatLibrary()
 # FP16384, in the IEEE 754-oriented format used by this library.
 # You can also spell the format out manually with exponent and mantissa bits.
 spec = lib.create_spec_from_total_bits(16384)
@@ -95,24 +106,30 @@ look! that's so easy!
 
 ## Python Tutorial
 
-1. Build or copy the native library into `python/overfloat/` so the wrapper can load it.
-2. Import `OverfloatLibrary` and create a library instance.
-3. Use `create_spec_from_total_bits(total_bits)` when you want a ready-made FPxxx-style format.
-4. Call the spec like a function to parse values.
-5. Use normal Python operators for arithmetic.
-6. Inspect `to_bits_hex()`, `from_bits_hex()`, `compare()`, and `compare_total()` when you need lower-level checks.
-7. Read `exception_flags` after operations that may raise IEEE-style status bits.
+1. Change into the repository's `python/` directory.
+2. Build or copy the native library into `python/overfloat/` so the wrapper loads it automatically.
+3. Import `OverfloatLibrary` and create a library instance.
+4. Use `create_spec_from_total_bits(total_bits)` for a ready-made FPxxx-style format.
+5. Call the spec like a function to parse values.
+6. Use normal Python operators for arithmetic.
+7. Inspect `to_bits_hex()`, `from_bits_hex()`, `compare()`, and `compare_total()` for lower-level checks.
+8. Read `exception_flags` after operations that may raise IEEE-style status bits.
+9. Call `close()` for deterministic native-handle cleanup, or use `with` for explicit lifetime management.
+
+If the native library is not copied into `python/overfloat/`, it can still be loaded explicitly, for example:
+
+```python README.md
+from overfloat import OverfloatLibrary
+
+lib = OverfloatLibrary("../bin/Release/net8.0/win-x64/publish/Overfloat.dll")
+```
 
 Example:
 
 ```python README.md
-import sys
-
-sys.path.insert(0, "python")
-
 from overfloat import OverfloatLibrary
 
-lib = OverfloatLibrary("python/overfloat/overfloat.dll")
+lib = OverfloatLibrary()
 spec = lib.create_spec_from_total_bits(4096)
 
 a = spec("1.5")
@@ -126,6 +143,18 @@ print(spec.from_bits_hex(a.to_bits_hex()))
 print(a.compare(b))
 print(a.compare_total(b))
 print(lib.exception_flags)
+```
+
+You can also manage object lifetime explicitly:
+
+```python README.md
+from overfloat import OverfloatLibrary
+
+lib = OverfloatLibrary()
+
+with lib.create_spec_from_total_bits(4096) as spec:
+    with spec("1.5") as value:
+        print(value)
 ```
 
 `spec.parse("1.5")` remains available for code that prefers the explicit parsing form.
@@ -149,8 +178,10 @@ The public header is [`include/overfloat.h`](include/overfloat.h).
 ## Tests
 
 ```powershell README.md
-dotnet run --project .\tests\Overfloat.Tests\Overfloat.Tests.csproj -c Release
+dotnet test .\tests\Overfloat.Tests\Overfloat.Tests.csproj -c Release
 ```
+
+Run Python examples and ad hoc Python checks from the repository `python/` directory.
 
 ## License
 

@@ -4,12 +4,10 @@ on:
   push:
     paths-ignore:
       - '**/*.md'
-      - '.github/workflows/**'
       - '.gitignore'
   pull_request:
     paths-ignore:
       - '**/*.md'
-      - '.github/workflows/**'
       - '.gitignore'
 
 jobs:
@@ -33,4 +31,4 @@ jobs:
       - name: Build
         run: dotnet build -c Release
       - name: Test
-        run: dotnet run --project tests/Overfloat.Tests/Overfloat.Tests.csproj -c Release
+        run: dotnet test tests/Overfloat.Tests/Overfloat.Tests.csproj -c Release

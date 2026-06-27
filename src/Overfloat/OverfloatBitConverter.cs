@@ -27,7 +27,7 @@ public static class OverfloatBitConverter
             throw new FormatException("Bit pattern exceeds the specification width.");
         }
 
-        var bits = BigInteger.Parse(trimmed, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture);
+        var bits = BigInteger.Parse($"0{trimmed}", NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture);
         var totalBits = specification.TotalBits;
         var limit = BigInteger.One << totalBits;
         if (bits < BigInteger.Zero || bits >= limit)
@@ -44,7 +44,13 @@ public static class OverfloatBitConverter
 
         var hexDigits = (number.Specification.TotalBits + 3) / 4;
         var bits = EncodeToBitPattern(number);
-        return bits.ToString($"X{hexDigits}", CultureInfo.InvariantCulture);
+        var hex = bits.ToString("X", CultureInfo.InvariantCulture);
+        if (hex.Length > hexDigits)
+        {
+            hex = hex[^hexDigits..];
+        }
+
+        return hex.PadLeft(hexDigits, '0');
     }
 
     internal static BigInteger EncodeToBitPattern(OverfloatNumber number)
