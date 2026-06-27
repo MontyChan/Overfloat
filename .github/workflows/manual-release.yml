@@ -73,7 +73,7 @@ jobs:
           if (Test-Path -LiteralPath "python/dist") {
             Remove-Item -LiteralPath "python/dist" -Recurse -Force
           }
-          python -m build --wheel --outdir dist python
+          python -m build --wheel --outdir python/dist python
       - name: Stage release files
         shell: pwsh
         run: |
@@ -83,7 +83,11 @@ jobs:
           Get-ChildItem -Path $publishDir -File |
             Where-Object { $_.Extension -in @('.dll', '.so', '.dylib', '.json', '.runtimeconfig.json') -or $_.Name -match '^overfloat\.(dll|so|dylib)$' -or $_.Name -match '^liboverfloat\.(so|dylib)$' } |
             Copy-Item -Destination $stageDir -Force
-          Get-ChildItem -Path python/dist -Filter *.whl | Copy-Item -Destination $stageDir -Force
+          $wheelFiles = Get-ChildItem -Path "python/dist" -Filter *.whl -File
+          if ($wheelFiles.Count -eq 0) {
+            throw "No wheel files were generated in python/dist."
+          }
+          $wheelFiles | Copy-Item -Destination $stageDir -Force
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
