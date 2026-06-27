@@ -74,7 +74,7 @@ from overfloat import OverfloatLibrary
 lib = OverfloatLibrary()
 ```
 
-如果不传路径，`OverfloatLibrary()` 会在包目录里查找内置原生库，查找顺序如下：
+如果不传路径，`OverfloatLibrary()` 会在 Python 包所在目录中查找随包一起安装的原生库文件。通过 wheel 安装时，这个库文件已经打包在包内。查找顺序如下：
 
 - `liboverfloat.so`
 - `overfloat.dll`

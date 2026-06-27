@@ -109,7 +109,7 @@ print(a * b)
 print(spec("1") / spec("10"))
 ```
 
-`OverfloatLibrary()` looks for the bundled native library in the package directory and checks these filenames in order:
+If no path is passed, `OverfloatLibrary()` looks for the native library file that is installed alongside the Python package. When the package is installed from a wheel, that library file is already bundled inside the package. It checks these filenames in order:
 
 - `liboverfloat.so`
 - `overfloat.dll`

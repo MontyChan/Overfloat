@@ -74,7 +74,7 @@ from overfloat import OverfloatLibrary
 lib = OverfloatLibrary()
 ```
 
-If no path is passed, `OverfloatLibrary()` looks for a bundled native library in the package directory and checks these filenames in order:
+If no path is passed, `OverfloatLibrary()` looks for the native library file that is installed alongside the Python package. When the package is installed from a wheel, that library file is already bundled inside the package. It checks these filenames in order:
 
 - `liboverfloat.so`
 - `overfloat.dll`
