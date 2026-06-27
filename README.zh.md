@@ -62,25 +62,36 @@ Console.WriteLine(OverfloatMath.Multiply(a, b));
 Console.WriteLine(OverfloatMath.Divide(a, b));
 ```
 
-## Python 示例
+## Python
 
-优先使用 GitHub Releases 中附带的 wheel。每个 release 可以包含对应平台的 wheel 和原生库产物。
+### 安装
 
-安装时应选择与当前平台和 Python 版本匹配的 wheel。当前 release workflow 生成的是 Python 3.11 wheel。
+优先使用 GitHub Releases 中附带的 wheel。
 
-示例：
+每个 release 可以包含：
+
+- 对应平台的 wheel
+- 对应平台的原生库产物
+
+下载与当前平台和 Python 版本匹配的 wheel，然后用 `pip` 安装。
+
+当前 release workflow 生成的是 Python 3.11 wheel。
+
+常见文件名示例：
 
 - Windows：`overfloat-<version>-cp311-cp311-win_amd64.whl`
 - Linux：`overfloat-<version>-cp311-cp311-manylinux_..._x86_64.whl`
 - macOS：`overfloat-<version>-cp311-cp311-macosx_11_0_arm64.whl`
 
-安装方式：
+示例：
 
 ```powershell README.md
 python -m pip install .\overfloat-<version>-cp311-cp311-win_amd64.whl
 ```
 
-安装后可直接使用：
+### 使用
+
+安装完成后，直接导入包并调用 `OverfloatLibrary()`。
 
 ```python README.md
 from overfloat import OverfloatLibrary
@@ -91,29 +102,19 @@ spec = lib.create_spec_from_total_bits(32)
 print(spec("1.5") + spec("2.25"))
 ```
 
-当 `OverfloatLibrary()` 不传参数直接调用时，封装层会到 Python 包旁边的 `overfloat/` 目录查找原生库。查找顺序如下：
+`OverfloatLibrary()` 会在包目录里查找内置原生库，查找顺序如下：
 
 - `liboverfloat.so`
 - `overfloat.dll`
 - `liboverfloat.dylib`
 
-在仓库的 `python/` 目录中运行源码示例时，默认约定如下：
-
-- Python 导入写法：`from overfloat import OverfloatLibrary`
-- 原生库位置：`python/overfloat/<当前平台的库文件>`
-
-从其他位置加载原生库时，仍然可以显式传入路径。
+示例：
 
 ```python README.md
 from overfloat import OverfloatLibrary
 
 lib = OverfloatLibrary()
-
-# FP16384，采用本库使用的IEEE 754导向格式。
-# 也可手动指定指数和尾数的位数。
-
-spec = lib.create_spec_from_total_bits(16384)
-manual_spec = lib.create_spec(43, 16340)
+spec = lib.create_spec_from_total_bits(4096)
 
 a = spec("1.5")
 b = spec("2.25")
@@ -124,22 +125,32 @@ print(spec.mantissa_bits)
 print(a + b)
 print(a * b)
 print(spec("1") / spec("10"))
-print(manual_spec.exponent_bits)
-print(manual_spec.mantissa_bits)
+print(a.to_bits_hex())
+print(spec.from_bits_hex(a.to_bits_hex()))
+print(a.compare(b))
+print(a.compare_total(b))
+print(lib.exception_flags)
 ```
+
+如果需要显式管理对象生命周期：
+
+```python README.md
+from overfloat import OverfloatLibrary
+
+lib = OverfloatLibrary()
+
+with lib.create_spec_from_total_bits(4096) as spec:
+    with spec("1.5") as value:
+        print(value)
+```
+
+对于偏好显式解析语法的代码，`spec.parse("1.5")` 依然可用。
 
 look! that's so easy!
 
-## Python 教程
-
-### 优先方式：使用 release wheel
-
-1. 打开 GitHub Releases。
-2. 下载与当前平台和 Python 版本匹配的 wheel。
-3. 使用 `python -m pip install <wheel-file>` 安装。
-4. 直接导入 `OverfloatLibrary`，并调用 `OverfloatLibrary()`。
-
 ### 直接使用已发布的原生库
+
+这种方式适合在打包成 wheel 之前，先检查刚发布出来的原生库是否可用。
 
 1. 构建或下载已发布的原生库。
 2. 进入仓库的 `python/` 目录。
@@ -152,8 +163,6 @@ from overfloat import OverfloatLibrary
 
 lib = OverfloatLibrary("../bin/Release/net8.0/win-x64/publish/Overfloat.dll")
 ```
-
-这种方式适合在打包成 wheel 之前先检查刚发布出来的原生库是否可用。
 
 ### 手动构建 wheel
 
@@ -173,54 +182,11 @@ python -m build --wheel --outdir dist .
 python -m pip install .\dist\overfloat-<version>-cp311-cp311-win_amd64.whl
 ```
 
-### 日常使用方式
+### 人工验证
 
-1. 需要标准的 FPxxx 格式时，使用 `create_spec_from_total_bits(total_bits)`。
-2. 像调用函数一样调用 `spec` 对象来解析数值。
-3. 使用标准的 Python 运算符进行算术运算。
-4. 需要底层检查时，可以使用 `to_bits_hex()`、`from_bits_hex()`、`compare()` 和 `compare_total()`。
-5. 在可能引发 IEEE 状态位的操作后，检查 `exception_flags`。
-6. 需要确定性的原生句柄释放时，可调用 `close()`，或者使用 `with` 管理对象生命周期。
+安装 release wheel 后，或者显式加载已发布原生库后，可以先做几条快速检查。
 
-示例：
-
-```python README.md
-from overfloat import OverfloatLibrary
-
-lib = OverfloatLibrary()
-spec = lib.create_spec_from_total_bits(4096)
-
-
-a = spec("1.5")
-b = spec("2.25")
-
-print(spec.exponent_bits)
-print(spec.mantissa_bits)
-print(a + b)
-print(a.to_bits_hex())
-print(spec.from_bits_hex(a.to_bits_hex()))
-print(a.compare(b))
-print(a.compare_total(b))
-print(lib.exception_flags)
-```
-
-也可以显式管理对象生命周期：
-
-```python README.md
-from overfloat import OverfloatLibrary
-
-lib = OverfloatLibrary()
-
-with lib.create_spec_from_total_bits(4096) as spec:
-    with spec("1.5") as value:
-        print(value)
-```
-
-对于偏好显式解析语法的代码，`spec.parse("1.5")` 依然可用。
-
-### 人工验证步骤
-
-安装 release wheel 后，或者显式加载已发布原生库后，可先做一轮快速人工检查：
+基础算术检查：
 
 ```powershell README.md
 python -c "from overfloat import OverfloatLibrary; lib = OverfloatLibrary(); spec = lib.create_spec_from_total_bits(32); print(spec('1.5') + spec('2.25'))"

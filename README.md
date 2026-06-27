@@ -63,25 +63,36 @@ Console.WriteLine(OverfloatMath.Multiply(a, b));
 Console.WriteLine(OverfloatMath.Divide(a, b));
 ```
 
-## Python Example
+## Python
 
-Prefer the wheel files attached to GitHub Releases. Each release can include platform-specific wheels and native library artifacts.
+### Install
 
-Install the wheel that matches the current platform and Python version. The current release workflow builds Python 3.11 wheels.
+Prefer the wheel files attached to GitHub Releases.
 
-Examples:
+Each release can contain:
+
+- platform-specific wheels
+- platform-specific native library artifacts
+
+Download the wheel that matches the current platform and Python version, then install it with `pip`.
+
+The current release workflow builds Python 3.11 wheels.
+
+Typical wheel names:
 
 - Windows: `overfloat-<version>-cp311-cp311-win_amd64.whl`
 - Linux: `overfloat-<version>-cp311-cp311-manylinux_..._x86_64.whl`
 - macOS: `overfloat-<version>-cp311-cp311-macosx_11_0_arm64.whl`
 
-Install from a downloaded wheel:
+Example:
 
 ```powershell README.md
 python -m pip install .\overfloat-<version>-cp311-cp311-win_amd64.whl
 ```
 
-After installation, use the package directly:
+### Use
+
+After installation, import the package and call `OverfloatLibrary()` directly.
 
 ```python README.md
 from overfloat import OverfloatLibrary
@@ -92,94 +103,11 @@ spec = lib.create_spec_from_total_bits(32)
 print(spec("1.5") + spec("2.25"))
 ```
 
-When `OverfloatLibrary()` is called without arguments, the wrapper looks for the native library next to the Python package in `overfloat/`. It checks these filenames in order:
+`OverfloatLibrary()` looks for the bundled native library in the package directory and checks these filenames in order:
 
 - `liboverfloat.so`
 - `overfloat.dll`
 - `liboverfloat.dylib`
-
-When running from the repository `python/` directory, the default source-tree setup is:
-
-- Python import: `from overfloat import OverfloatLibrary`
-- Native library location: `python/overfloat/<platform library file>`
-
-An explicit path remains supported for loading a library from another location.
-
-```python README.md
-from overfloat import OverfloatLibrary
-
-lib = OverfloatLibrary()
-# FP16384, in the IEEE 754-oriented format used by this library.
-# You can also spell the format out manually with exponent and mantissa bits.
-spec = lib.create_spec_from_total_bits(16384)
-manual_spec = lib.create_spec(43, 16340)
-
-a = spec("1.5")
-b = spec("2.25")
-
-print(lib.version)
-print(spec.exponent_bits)
-print(spec.mantissa_bits)
-print(a + b)
-print(a * b)
-print(spec("1") / spec("10"))
-print(manual_spec.exponent_bits)
-print(manual_spec.mantissa_bits)
-```
-
-look! that's so easy!
-
-## Python Tutorial
-
-### Preferred: use a release wheel
-
-1. Open GitHub Releases.
-2. Download the wheel that matches the current platform and Python version.
-3. Install it with `python -m pip install <wheel-file>`.
-4. Import `OverfloatLibrary` and call `OverfloatLibrary()` directly.
-
-### Use a published native library directly
-
-1. Build or download a published native library.
-2. Change into the repository `python/` directory.
-3. Load the library with an explicit path.
-
-Example:
-
-```python README.md
-from overfloat import OverfloatLibrary
-
-lib = OverfloatLibrary("../bin/Release/net8.0/win-x64/publish/Overfloat.dll")
-```
-
-This is useful for checking a freshly published native build before packaging it into a wheel.
-
-### Build a wheel manually
-
-1. Build the native library for the target platform.
-2. Copy the published native library into `python/overfloat/`.
-3. Change into the `python/` directory.
-4. Run `python -m build --wheel --outdir dist .`
-5. Install the generated wheel from `python/dist/`.
-
-Windows example:
-
-```powershell README.md
-dotnet publish .\Overfloat.csproj -c Release -r win-x64
-Copy-Item .\bin\Release\net8.0\win-x64\publish\Overfloat.dll .\python\overfloat\overfloat.dll -Force
-Set-Location .\python
-python -m build --wheel --outdir dist .
-python -m pip install .\dist\overfloat-<version>-cp311-cp311-win_amd64.whl
-```
-
-### Day-to-day package usage
-
-1. Use `create_spec_from_total_bits(total_bits)` for a ready-made FPxxx-style format.
-2. Call the spec like a function to parse values.
-3. Use normal Python operators for arithmetic.
-4. Inspect `to_bits_hex()`, `from_bits_hex()`, `compare()`, and `compare_total()` for lower-level checks.
-5. Read `exception_flags` after operations that may raise IEEE-style status bits.
-6. Call `close()` for deterministic native-handle cleanup, or use `with` for explicit lifetime management.
 
 Example:
 
@@ -192,9 +120,12 @@ spec = lib.create_spec_from_total_bits(4096)
 a = spec("1.5")
 b = spec("2.25")
 
+print(lib.version)
 print(spec.exponent_bits)
 print(spec.mantissa_bits)
 print(a + b)
+print(a * b)
+print(spec("1") / spec("10"))
 print(a.to_bits_hex())
 print(spec.from_bits_hex(a.to_bits_hex()))
 print(a.compare(b))
@@ -202,7 +133,7 @@ print(a.compare_total(b))
 print(lib.exception_flags)
 ```
 
-You can also manage object lifetime explicitly:
+For explicit lifetime management:
 
 ```python README.md
 from overfloat import OverfloatLibrary
@@ -216,9 +147,47 @@ with lib.create_spec_from_total_bits(4096) as spec:
 
 `spec.parse("1.5")` remains available for code that prefers the explicit parsing form.
 
-### Manual validation steps
+look! that's so easy!
 
-For a quick manual check after installing a release wheel or loading a published native library explicitly:
+### Use A Published Native Library Directly
+
+This path is useful for checking a freshly published native build before packaging it into a wheel.
+
+1. Build or download a published native library.
+2. Change into the repository `python/` directory.
+3. Load the library with an explicit path.
+
+Example:
+
+```python README.md
+from overfloat import OverfloatLibrary
+
+lib = OverfloatLibrary("../bin/Release/net8.0/win-x64/publish/Overfloat.dll")
+```
+
+### Build A Wheel Manually
+
+1. Build the native library for the target platform.
+2. Copy the published native library into `python/overfloat/`.
+3. Change into the `python/` directory.
+4. Run `python -m build --wheel --outdir dist .`.
+5. Install the generated wheel from `python/dist/`.
+
+Windows example:
+
+```powershell README.md
+dotnet publish .\Overfloat.csproj -c Release -r win-x64
+Copy-Item .\bin\Release\net8.0\win-x64\publish\Overfloat.dll .\python\overfloat\overfloat.dll -Force
+Set-Location .\python
+python -m build --wheel --outdir dist .
+python -m pip install .\dist\overfloat-<version>-cp311-cp311-win_amd64.whl
+```
+
+### Manual Validation
+
+After installing a release wheel, or after loading a published native library explicitly, run a few quick checks.
+
+Basic arithmetic check:
 
 ```powershell README.md
 python -c "from overfloat import OverfloatLibrary; lib = OverfloatLibrary(); spec = lib.create_spec_from_total_bits(32); print(spec('1.5') + spec('2.25'))"
