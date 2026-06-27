@@ -67,7 +67,7 @@ Console.WriteLine(OverfloatMath.Divide(a, b));
 from overfloat import OverfloatLibrary
 
 lib = OverfloatLibrary("python/overfloat/overfloat.dll")
-spec = lib.create_spec(8, 23)
+spec = lib.create_spec_from_total_bits(16384)
 
 a = spec("1.5")
 b = spec("2.25")
@@ -78,6 +78,39 @@ print(spec.mantissa_bits)
 print(a + b)
 print(a * b)
 print(spec("1") / spec("10"))
+```
+
+look! that's so easy!
+
+## Python Tutorial
+
+1. Build or copy the native library into `python/overfloat/` so the wrapper can load it.
+2. Import `OverfloatLibrary` and create a library instance.
+3. Use `create_spec_from_total_bits(total_bits)` when you want a ready-made FPxxx-style format.
+4. Call the spec like a function to parse values.
+5. Use normal Python operators for arithmetic.
+6. Inspect `to_bits_hex()`, `from_bits_hex()`, `compare()`, and `compare_total()` when you need lower-level checks.
+7. Read `exception_flags` after operations that may raise IEEE-style status bits.
+
+Example:
+
+```python README.md
+from overfloat import OverfloatLibrary
+
+lib = OverfloatLibrary("python/overfloat/overfloat.dll")
+spec = lib.create_spec_from_total_bits(4096)
+
+a = spec("1.5")
+b = spec("2.25")
+
+print(spec.exponent_bits)
+print(spec.mantissa_bits)
+print(a + b)
+print(a.to_bits_hex())
+print(spec.from_bits_hex(a.to_bits_hex()))
+print(a.compare(b))
+print(a.compare_total(b))
+print(lib.exception_flags)
 ```
 
 `spec.parse("1.5")` remains available for code that prefers the explicit parsing form.
