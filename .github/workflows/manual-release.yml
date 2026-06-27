@@ -24,9 +24,6 @@ jobs:
           - runs-on: ubuntu-latest
             runtime: linux-x64
             artifact-name: overfloat-linux-x64
-          - runs-on: macos-13
-            runtime: osx-x64
-            artifact-name: overfloat-osx-x64
           - runs-on: macos-14
             runtime: osx-arm64
             artifact-name: overfloat-osx-arm64

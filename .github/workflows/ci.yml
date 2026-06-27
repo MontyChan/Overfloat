@@ -2,7 +2,15 @@ name: ci
 
 on:
   push:
+    paths-ignore:
+      - '**/*.md'
+      - '.github/workflows/**'
+      - '.gitignore'
   pull_request:
+    paths-ignore:
+      - '**/*.md'
+      - '.github/workflows/**'
+      - '.gitignore'
 
 jobs:
   build:
