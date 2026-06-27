@@ -98,7 +98,7 @@ After installation, import the package and call `OverfloatLibrary()` directly.
 from overfloat import OverfloatLibrary
 
 lib = OverfloatLibrary()
-spec = lib.create_spec_from_total_bits(32)
+spec = lib.create_spec_from_total_bits(32)  # 32-bit floating-point format, FP32
 
 a = spec("1.5")
 b = spec("2.25")

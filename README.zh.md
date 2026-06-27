@@ -97,7 +97,7 @@ python -m pip install .\overfloat-<version>-cp311-cp311-win_amd64.whl
 from overfloat import OverfloatLibrary
 
 lib = OverfloatLibrary()
-spec = lib.create_spec_from_total_bits(32)
+spec = lib.create_spec_from_total_bits(32)  # 32位浮点数，FP32
 
 a = spec("1.5")
 b = spec("2.25")
