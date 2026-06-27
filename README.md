@@ -2,6 +2,8 @@
 
 Overfloat is a .NET 8 Native AOT floating-point library with a native C ABI and a Python binding layer. It is an IEEE 754-oriented arbitrary-precision floating-point library.
 
+[简体中文](./README.zh.md) | [English](./README.md)
+
 ## Status
 
 The implementation currently supports:
