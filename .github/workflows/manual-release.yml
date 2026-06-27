@@ -3,6 +3,10 @@ name: manual-release
 on:
   workflow_dispatch:
     inputs:
+      tag:
+        description: Release tag
+        required: true
+        type: string
       configuration:
         description: Build configuration
         required: false
@@ -13,7 +17,7 @@ on:
           - Debug
 
 jobs:
-  publish:
+  build-assets:
     strategy:
       fail-fast: false
       matrix:
@@ -21,17 +25,27 @@ jobs:
           - runs-on: windows-latest
             runtime: win-x64
             artifact-name: overfloat-win-x64
+            platform-tag: win_amd64
+            native-library: overfloat.dll
           - runs-on: ubuntu-latest
             runtime: linux-x64
             artifact-name: overfloat-linux-x64
+            platform-tag: manylinux_2_17_x86_64
+            native-library: liboverfloat.so
           - runs-on: macos-14
             runtime: osx-arm64
             artifact-name: overfloat-osx-arm64
+            platform-tag: macosx_11_0_arm64
+            native-library: liboverfloat.dylib
     runs-on: ${{ matrix.runs-on }}
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -39,9 +53,27 @@ jobs:
       - name: Restore
         run: dotnet restore
       - name: Validate
-        run: dotnet run --project tests/Overfloat.Tests/Overfloat.Tests.csproj -c ${{ inputs.configuration }}
+        run: dotnet test tests/Overfloat.Tests/Overfloat.Tests.csproj -c ${{ inputs.configuration }}
       - name: Publish
         run: dotnet publish Overfloat.csproj -c ${{ inputs.configuration }} -r ${{ matrix.runtime }} --self-contained true /p:DebugType=None /p:DebugSymbols=false
+      - name: Prepare Python package native library
+        shell: pwsh
+        run: |
+          $publishDir = "bin/${{ inputs.configuration }}/net8.0/${{ matrix.runtime }}/publish"
+          $packageDir = "python/overfloat"
+          New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
+          Get-ChildItem -Path $packageDir -File |
+            Where-Object { $_.Extension -in @('.dll', '.so', '.dylib') } |
+            Remove-Item -Force
+          Copy-Item -LiteralPath "$publishDir/${{ matrix.native-library }}" -Destination "$packageDir/${{ matrix.native-library }}" -Force
+      - name: Build wheel
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip build wheel setuptools
+          if (Test-Path -LiteralPath "python/dist") {
+            Remove-Item -LiteralPath "python/dist" -Recurse -Force
+          }
+          python -m build --wheel --outdir dist python
       - name: Stage release files
         shell: pwsh
         run: |
@@ -51,9 +83,28 @@ jobs:
           Get-ChildItem -Path $publishDir -File |
             Where-Object { $_.Extension -in @('.dll', '.so', '.dylib', '.json', '.runtimeconfig.json') -or $_.Name -match '^overfloat\.(dll|so|dylib)$' -or $_.Name -match '^liboverfloat\.(so|dylib)$' } |
             Copy-Item -Destination $stageDir -Force
+          Get-ChildItem -Path python/dist -Filter *.whl | Copy-Item -Destination $stageDir -Force
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact-name }}
           path: artifacts/${{ matrix.artifact-name }}/*
           if-no-files-found: error
+
+  release:
+    needs: build-assets
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag }}
+          name: ${{ inputs.tag }}
+          draft: false
+          prerelease: false
+          files: release-artifacts/**/*

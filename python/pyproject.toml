@@ -1,14 +1,15 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=68", "wheel", "build"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "overfloat"
 version = "0.1.0"
 description = "Python bindings for the Overfloat native floating-point runtime"
-readme = {file = "../README.md", content-type = "text/markdown"}
+readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.9"
-license = {text = "Apache-2.0"}
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 authors = [{name = "Overfloat Contributors"}]
 
 [tool.setuptools]
@@ -17,4 +18,3 @@ include-package-data = true
 
 [tool.setuptools.package-data]
 overfloat = ["*.so", "*.dll", "*.dylib"]
-
