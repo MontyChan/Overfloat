@@ -1,0 +1,62 @@
+name: manual-release
+
+on:
+  workflow_dispatch:
+    inputs:
+      configuration:
+        description: Build configuration
+        required: false
+        default: Release
+        type: choice
+        options:
+          - Release
+          - Debug
+
+jobs:
+  publish:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runs-on: windows-latest
+            runtime: win-x64
+            artifact-name: overfloat-win-x64
+          - runs-on: ubuntu-latest
+            runtime: linux-x64
+            artifact-name: overfloat-linux-x64
+          - runs-on: macos-13
+            runtime: osx-x64
+            artifact-name: overfloat-osx-x64
+          - runs-on: macos-14
+            runtime: osx-arm64
+            artifact-name: overfloat-osx-arm64
+    runs-on: ${{ matrix.runs-on }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Restore
+        run: dotnet restore
+      - name: Validate
+        run: dotnet run --project tests/Overfloat.Tests/Overfloat.Tests.csproj -c ${{ inputs.configuration }}
+      - name: Publish
+        run: dotnet publish Overfloat.csproj -c ${{ inputs.configuration }} -r ${{ matrix.runtime }} --self-contained true /p:DebugType=None /p:DebugSymbols=false
+      - name: Stage release files
+        shell: pwsh
+        run: |
+          $publishDir = "bin/${{ inputs.configuration }}/net8.0/${{ matrix.runtime }}/publish"
+          $stageDir = "artifacts/${{ matrix.artifact-name }}"
+          New-Item -ItemType Directory -Force -Path $stageDir | Out-Null
+          Get-ChildItem -Path $publishDir -File |
+            Where-Object { $_.Extension -in @('.dll', '.so', '.dylib', '.json', '.runtimeconfig.json') -or $_.Name -match '^overfloat\.(dll|so|dylib)$' -or $_.Name -match '^liboverfloat\.(so|dylib)$' } |
+            Copy-Item -Destination $stageDir -Force
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: artifacts/${{ matrix.artifact-name }}/*
+          if-no-files-found: error
