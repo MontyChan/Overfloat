@@ -65,12 +65,17 @@ Console.WriteLine(OverfloatMath.Divide(a, b));
 ## Python 示例
 
 ```python README.md
+import sys
+
+sys.path.insert(0, "python")
+
 from overfloat import OverfloatLibrary
 
 lib = OverfloatLibrary("python/overfloat/overfloat.dll")
 
 # FP16384，采用本库使用的IEEE 754导向格式。
 # 也可手动指定指数和尾数的位数。
+
 spec = lib.create_spec_from_total_bits(16384)
 manual_spec = lib.create_spec(43, 16340)
 
@@ -87,7 +92,7 @@ print(manual_spec.exponent_bits)
 print(manual_spec.mantissa_bits)
 ```
 
-看！就是这么简单！
+look! that's so easy!
 
 ## Python 教程
 
@@ -102,10 +107,15 @@ print(manual_spec.mantissa_bits)
 示例：
 
 ```python README.md
+import sys
+
+sys.path.insert(0, "python")
+
 from overfloat import OverfloatLibrary
 
 lib = OverfloatLibrary("python/overfloat/overfloat.dll")
 spec = lib.create_spec_from_total_bits(4096)
+
 
 a = spec("1.5")
 b = spec("2.25")

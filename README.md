@@ -66,6 +66,10 @@ Console.WriteLine(OverfloatMath.Divide(a, b));
 ## Python Example
 
 ```python README.md
+import sys
+
+sys.path.insert(0, "python")
+
 from overfloat import OverfloatLibrary
 
 lib = OverfloatLibrary("python/overfloat/overfloat.dll")
@@ -102,6 +106,10 @@ look! that's so easy!
 Example:
 
 ```python README.md
+import sys
+
+sys.path.insert(0, "python")
+
 from overfloat import OverfloatLibrary
 
 lib = OverfloatLibrary("python/overfloat/overfloat.dll")
