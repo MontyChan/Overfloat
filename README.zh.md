@@ -99,7 +99,12 @@ from overfloat import OverfloatLibrary
 lib = OverfloatLibrary()
 spec = lib.create_spec_from_total_bits(32)
 
-print(spec("1.5") + spec("2.25"))
+a = spec("1.5")
+b = spec("2.25")
+
+print(a + b)
+print(a * b)
+print(spec("1") / spec("10"))
 ```
 
 `OverfloatLibrary()` 会在包目录里查找内置原生库，查找顺序如下：

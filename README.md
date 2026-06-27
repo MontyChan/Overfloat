@@ -100,7 +100,12 @@ from overfloat import OverfloatLibrary
 lib = OverfloatLibrary()
 spec = lib.create_spec_from_total_bits(32)
 
-print(spec("1.5") + spec("2.25"))
+a = spec("1.5")
+b = spec("2.25")
+
+print(a + b)
+print(a * b)
+print(spec("1") / spec("10"))
 ```
 
 `OverfloatLibrary()` looks for the bundled native library in the package directory and checks these filenames in order:
