@@ -26,17 +26,17 @@ jobs:
             runtime: win-x64
             artifact-name: overfloat-win-x64
             platform-tag: win_amd64
-            native-library: overfloat.dll
+            package-library: overfloat.dll
           - runs-on: ubuntu-latest
             runtime: linux-x64
             artifact-name: overfloat-linux-x64
             platform-tag: manylinux_2_17_x86_64
-            native-library: liboverfloat.so
+            package-library: liboverfloat.so
           - runs-on: macos-14
             runtime: osx-arm64
             artifact-name: overfloat-osx-arm64
             platform-tag: macosx_11_0_arm64
-            native-library: liboverfloat.dylib
+            package-library: liboverfloat.dylib
     runs-on: ${{ matrix.runs-on }}
     permissions:
       contents: read
@@ -65,7 +65,13 @@ jobs:
           Get-ChildItem -Path $packageDir -File |
             Where-Object { $_.Extension -in @('.dll', '.so', '.dylib') } |
             Remove-Item -Force
-          Copy-Item -LiteralPath "$publishDir/${{ matrix.native-library }}" -Destination "$packageDir/${{ matrix.native-library }}" -Force
+          $nativeLibrary = Get-ChildItem -Path $publishDir -File |
+            Where-Object { $_.Name -match '^(lib)?overfloat\.(dll|so|dylib)$' } |
+            Select-Object -First 1
+          if ($null -eq $nativeLibrary) {
+            throw "No published native library was found in $publishDir."
+          }
+          Copy-Item -LiteralPath $nativeLibrary.FullName -Destination "$packageDir/${{ matrix.package-library }}" -Force
       - name: Build wheel
         shell: pwsh
         run: |
@@ -81,7 +87,7 @@ jobs:
           $stageDir = "artifacts/${{ matrix.artifact-name }}"
           New-Item -ItemType Directory -Force -Path $stageDir | Out-Null
           Get-ChildItem -Path $publishDir -File |
-            Where-Object { $_.Extension -in @('.dll', '.so', '.dylib', '.json', '.runtimeconfig.json') -or $_.Name -match '^overfloat\.(dll|so|dylib)$' -or $_.Name -match '^liboverfloat\.(so|dylib)$' } |
+            Where-Object { $_.Extension -in @('.dll', '.so', '.dylib', '.json', '.runtimeconfig.json') -or $_.Name -match '^(lib)?overfloat\.(dll|so|dylib)$' } |
             Copy-Item -Destination $stageDir -Force
           $wheelFiles = Get-ChildItem -Path "python/dist" -Filter *.whl -File
           if ($wheelFiles.Count -eq 0) {
