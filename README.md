@@ -67,7 +67,10 @@ Console.WriteLine(OverfloatMath.Divide(a, b));
 from overfloat import OverfloatLibrary
 
 lib = OverfloatLibrary("python/overfloat/overfloat.dll")
+# FP16384, in the IEEE 754-oriented format used by this library.
+# You can also spell the format out manually with exponent and mantissa bits.
 spec = lib.create_spec_from_total_bits(16384)
+manual_spec = lib.create_spec(43, 16340)
 
 a = spec("1.5")
 b = spec("2.25")
@@ -78,6 +81,8 @@ print(spec.mantissa_bits)
 print(a + b)
 print(a * b)
 print(spec("1") / spec("10"))
+print(manual_spec.exponent_bits)
+print(manual_spec.mantissa_bits)
 ```
 
 look! that's so easy!
