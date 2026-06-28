@@ -270,4 +270,4 @@ Run Python examples and ad hoc Python checks from the repository `python/` direc
 
 ## License
 
-Apache License 2.0.
+Apache License 2.0
