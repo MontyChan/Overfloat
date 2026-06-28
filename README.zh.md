@@ -269,4 +269,4 @@ dotnet test .\tests\Overfloat.Tests\Overfloat.Tests.csproj -c Release
 
 ## 开源协议 (License)
 
-Apache License 2.0.
+Apache License 2.0
