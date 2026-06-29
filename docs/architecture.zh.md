@@ -80,7 +80,7 @@ lib = OverfloatLibrary()
 - `overfloat.dll`
 - `liboverfloat.dylib`
 
-也可以显式传入路径：
+也可显式传入路径：
 
 ```python
 from overfloat import OverfloatLibrary
