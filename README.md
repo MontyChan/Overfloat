@@ -77,18 +77,20 @@ Each release can contain:
 
 Download the wheel that matches the current platform and Python version, then install it with `pip`.
 
-The current release workflow builds Python 3.11 wheels.
+The current release workflow builds wheels for Python 3.9, 3.10, 3.11, 3.12, and 3.13.
 
 Typical wheel names:
 
-- Windows: `overfloat-<version>-cp311-cp311-win_amd64.whl`
-- Linux: `overfloat-<version>-cp311-cp311-manylinux_..._x86_64.whl`
-- macOS: `overfloat-<version>-cp311-cp311-macosx_11_0_arm64.whl`
+- Windows: `overfloat-<version>-cp<python>-cp<python>-win_amd64.whl`
+- Linux: `overfloat-<version>-cp<python>-cp<python>-manylinux_..._x86_64.whl`
+- macOS: `overfloat-<version>-cp<python>-cp<python>-macosx_11_0_arm64.whl`
+
+For example, Python 3.9 uses `cp39`, Python 3.10 uses `cp310`, Python 3.11 uses `cp311`, Python 3.12 uses `cp312`, and Python 3.13 uses `cp313`.
 
 Example:
 
 ```powershell README.md
-python -m pip install .\overfloat-<version>-cp311-cp311-win_amd64.whl
+python -m pip install .\overfloat-<version>-cp312-cp312-win_amd64.whl
 ```
 
 ### Use
@@ -213,7 +215,7 @@ dotnet publish .\Overfloat.csproj -c Release -r win-x64
 Copy-Item .\bin\Release\net8.0\win-x64\publish\Overfloat.dll .\python\overfloat\overfloat.dll -Force
 Set-Location .\python
 python -m build --wheel --outdir dist .
-python -m pip install .\dist\overfloat-<version>-cp311-cp311-win_amd64.whl
+python -m pip install .\dist\overfloat-<version>-cp312-cp312-win_amd64.whl
 ```
 
 ### Manual Validation

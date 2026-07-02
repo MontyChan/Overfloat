@@ -11,6 +11,26 @@ requires-python = ">=3.9"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 authors = [{name = "Overfloat Contributors"}]
+keywords = ["floating-point", "ieee-754", "native", "ctypes", "arbitrary-precision"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[project.urls]
+Homepage = "https://github.com/overfloat/overfloat"
+Repository = "https://github.com/overfloat/overfloat"
+Issues = "https://github.com/overfloat/overfloat/issues"
 
 [tool.setuptools]
 packages = ["overfloat"]

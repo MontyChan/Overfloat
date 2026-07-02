@@ -76,18 +76,20 @@ Console.WriteLine(OverfloatMath.Divide(a, b));
 
 下载与当前平台和 Python 版本匹配的 wheel，然后用 `pip` 安装。
 
-当前 release workflow 生成的是 Python 3.11 wheel。
+当前 release workflow 会生成 Python 3.9、3.10、3.11、3.12 和 3.13 的 wheel。
 
 常见文件名示例：
 
-- Windows：`overfloat-<version>-cp311-cp311-win_amd64.whl`
-- Linux：`overfloat-<version>-cp311-cp311-manylinux_..._x86_64.whl`
-- macOS：`overfloat-<version>-cp311-cp311-macosx_11_0_arm64.whl`
+- Windows：`overfloat-<version>-cp<python>-cp<python>-win_amd64.whl`
+- Linux：`overfloat-<version>-cp<python>-cp<python>-manylinux_..._x86_64.whl`
+- macOS：`overfloat-<version>-cp<python>-cp<python>-macosx_11_0_arm64.whl`
+
+例如 Python 3.9 对应 `cp39`，Python 3.10 对应 `cp310`，Python 3.11 对应 `cp311`，Python 3.12 对应 `cp312`，Python 3.13 对应 `cp313`。
 
 示例：
 
 ```powershell README.md
-python -m pip install .\overfloat-<version>-cp311-cp311-win_amd64.whl
+python -m pip install .\overfloat-<version>-cp312-cp312-win_amd64.whl
 ```
 
 ### 使用
@@ -212,7 +214,7 @@ dotnet publish .\Overfloat.csproj -c Release -r win-x64
 Copy-Item .\bin\Release\net8.0\win-x64\publish\Overfloat.dll .\python\overfloat\overfloat.dll -Force
 Set-Location .\python
 python -m build --wheel --outdir dist .
-python -m pip install .\dist\overfloat-<version>-cp311-cp311-win_amd64.whl
+python -m pip install .\dist\overfloat-<version>-cp312-cp312-win_amd64.whl
 ```
 
 ### 人工验证

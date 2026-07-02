@@ -21,23 +21,34 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - runs-on: windows-latest
+        python:
+          - version: '3.9'
+            tag: py39
+          - version: '3.10'
+            tag: py310
+          - version: '3.11'
+            tag: py311
+          - version: '3.12'
+            tag: py312
+          - version: '3.13'
+            tag: py313
+        target:
+          - os: windows-latest
             runtime: win-x64
-            artifact-name: overfloat-win-x64
-            platform-tag: win_amd64
-            package-library: overfloat.dll
-          - runs-on: ubuntu-latest
+            artifact_name: overfloat-win-x64
+            platform_tag: win_amd64
+            package_library: overfloat.dll
+          - os: ubuntu-latest
             runtime: linux-x64
-            artifact-name: overfloat-linux-x64
-            platform-tag: manylinux_2_17_x86_64
-            package-library: liboverfloat.so
-          - runs-on: macos-14
+            artifact_name: overfloat-linux-x64
+            platform_tag: manylinux_2_17_x86_64
+            package_library: liboverfloat.so
+          - os: macos-14
             runtime: osx-arm64
-            artifact-name: overfloat-osx-arm64
-            platform-tag: macosx_11_0_arm64
-            package-library: liboverfloat.dylib
-    runs-on: ${{ matrix.runs-on }}
+            artifact_name: overfloat-osx-arm64
+            platform_tag: macosx_11_0_arm64
+            package_library: liboverfloat.dylib
+    runs-on: ${{ matrix.target.os }}
     permissions:
       contents: read
     steps:
@@ -54,7 +65,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python.version }}
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -64,11 +75,11 @@ jobs:
       - name: Validate
         run: dotnet test tests/Overfloat.Tests/Overfloat.Tests.csproj -c ${{ inputs.configuration }}
       - name: Publish
-        run: dotnet publish Overfloat.csproj -c ${{ inputs.configuration }} -r ${{ matrix.runtime }} --self-contained true /p:DebugType=None /p:DebugSymbols=false
+        run: dotnet publish Overfloat.csproj -c ${{ inputs.configuration }} -r ${{ matrix.target.runtime }} --self-contained true /p:DebugType=None /p:DebugSymbols=false
       - name: Prepare Python package native library
         shell: pwsh
         run: |
-          $publishDir = "bin/${{ inputs.configuration }}/net8.0/${{ matrix.runtime }}/publish"
+          $publishDir = "bin/${{ inputs.configuration }}/net8.0/${{ matrix.target.runtime }}/publish"
           $packageDir = "python/overfloat"
           New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
           Get-ChildItem -Path $packageDir -File |
@@ -80,7 +91,7 @@ jobs:
           if ($null -eq $nativeLibrary) {
             throw "No published native library was found in $publishDir."
           }
-          Copy-Item -LiteralPath $nativeLibrary.FullName -Destination "$packageDir/${{ matrix.package-library }}" -Force
+          Copy-Item -LiteralPath $nativeLibrary.FullName -Destination "$packageDir/${{ matrix.target.package_library }}" -Force
       - name: Build wheel
         shell: pwsh
         run: |
@@ -89,15 +100,21 @@ jobs:
             Remove-Item -LiteralPath "python/dist" -Recurse -Force
           }
           python -m build --wheel --outdir python/dist python
+          $wheelFiles = Get-ChildItem -Path "python/dist" -Filter *.whl -File
+          foreach ($wheel in $wheelFiles) {
+            python -m wheel tags --platform-tag "${{ matrix.target.platform_tag }}" --remove $wheel.FullName
+          }
       - name: Stage release files
         shell: pwsh
         run: |
-          $publishDir = "bin/${{ inputs.configuration }}/net8.0/${{ matrix.runtime }}/publish"
-          $stageDir = "artifacts/${{ matrix.artifact-name }}"
+          $publishDir = "bin/${{ inputs.configuration }}/net8.0/${{ matrix.target.runtime }}/publish"
+          $stageDir = "artifacts/${{ matrix.target.artifact_name }}-${{ matrix.python.tag }}"
           New-Item -ItemType Directory -Force -Path $stageDir | Out-Null
-          Get-ChildItem -Path $publishDir -File |
-            Where-Object { $_.Extension -in @('.dll', '.so', '.dylib', '.json', '.runtimeconfig.json') -or $_.Name -match '^(lib)?overfloat\.(dll|so|dylib)$' } |
-            Copy-Item -Destination $stageDir -Force
+          if ("${{ matrix.python.tag }}" -eq "py311") {
+            Get-ChildItem -Path $publishDir -File |
+              Where-Object { $_.Extension -in @('.dll', '.so', '.dylib', '.json', '.runtimeconfig.json') -or $_.Name -match '^(lib)?overfloat\.(dll|so|dylib)$' } |
+              Copy-Item -Destination $stageDir -Force
+          }
           $wheelFiles = Get-ChildItem -Path "python/dist" -Filter *.whl -File
           if ($wheelFiles.Count -eq 0) {
             throw "No wheel files were generated in python/dist."
@@ -106,8 +123,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact-name }}
-          path: artifacts/${{ matrix.artifact-name }}/*
+          name: ${{ matrix.target.artifact_name }}-${{ matrix.python.tag }}
+          path: artifacts/${{ matrix.target.artifact_name }}-${{ matrix.python.tag }}/*
           if-no-files-found: error
 
   release:
